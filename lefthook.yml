@@ -1,0 +1,15 @@
+pre-commit:
+  parallel: true
+  jobs:
+    - name: Check code quality
+      run: pnpm check
+      glob: "*.{ts,tsx,js,jsx,json,md,yml,yaml}"
+
+    - name: Check TypeScript types
+      run: pnpm check-types
+      glob: "*.{ts,tsx}"
+
+pre-push:
+  jobs:
+    - name: Run tests
+      run: pnpm test
