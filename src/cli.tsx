@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { realpathSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import meow from "meow";
 import { type AddInput, add } from "./commands/add.js";
 import { remove } from "./commands/remove.js";
@@ -64,6 +66,8 @@ export async function dispatch(argv: string[], h: Handlers): Promise<void> {
     case "":
     case undefined:
     case "help":
+    case "--help":
+    case "-h":
       console.log(HELP);
       return;
     default:
@@ -90,7 +94,10 @@ const HELP = `
     \u001b[1;33mstatus\u001b[0m              \u001b[90m➔\u001b[0m Table of all rules + run state
 `;
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (
+  process.argv[1] &&
+  realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url))
+) {
   const [, , cmd, ...rest] = process.argv;
   await dispatch([cmd ?? "", ...rest], {
     add,
