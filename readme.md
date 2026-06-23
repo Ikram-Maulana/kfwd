@@ -1,11 +1,3 @@
-<p align="center">
-  <img src="https://img.shields.io/badge/kubernetes-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white" alt="Kubernetes">
-  <img src="https://img.shields.io/npm/v/%40ikrammaulana%2Fkfwd?style=for-the-badge&logo=npm&logoColor=white&color=CB3837" alt="npm version">
-  <img src="https://img.shields.io/npm/dm/%40ikrammaulana%2Fkfwd?style=for-the-badge&logo=npm&logoColor=white&color=CB3837" alt="npm downloads">
-  <img src="https://img.shields.io/github/license/Ikram-Maulana/kfwd?style=for-the-badge&color=blue" alt="license">
-  <img src="https://img.shields.io/badge/node-%3E%3D22-brightgreen?style=for-the-badge&logo=node.js&logoColor=white" alt="node version">
-</p>
-
 <h1 align="center">kfwd</h1>
 
 <p align="center">
