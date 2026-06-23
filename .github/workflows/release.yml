@@ -46,12 +46,6 @@ jobs:
           skip-version-file: "false"
           skip-on-empty: "true"
 
-      - name: Create git tag
-        if: steps.changelog.outputs.skipped == 'false'
-        run: |
-          git tag "${{ steps.changelog.outputs.tag }}"
-          git push origin "${{ steps.changelog.outputs.tag }}"
-
       - name: Commit changelog
         if: steps.changelog.outputs.skipped == 'false'
         run: |
@@ -60,6 +54,12 @@ jobs:
           git add CHANGELOG.md package.json
           git commit -m "chore(release): ${{ steps.changelog.outputs.version }} [skip ci]"
           git push
+
+      - name: Create git tag
+        if: steps.changelog.outputs.skipped == 'false'
+        run: |
+          git tag "${{ steps.changelog.outputs.tag }}"
+          git push origin "${{ steps.changelog.outputs.tag }}"
 
       - name: Create GitHub Release
         if: steps.changelog.outputs.skipped == 'false'
