@@ -1,3 +1,12 @@
+## [0.1.2](https://github.com/Ikram-Maulana/kfwd/compare/v0.1.1...v0.1.2) (2026-06-23)
+
+
+### Bug Fixes
+
+* sync package.json version in release workflow ([b6b8a9c](https://github.com/Ikram-Maulana/kfwd/commit/b6b8a9ca32321ebaced47e89a3eda261729a37b1))
+
+
+
 ## [0.1.1](https://github.com/Ikram-Maulana/kfwd/compare/v0.1.0...v0.1.1) (2026-06-23)
 
 
