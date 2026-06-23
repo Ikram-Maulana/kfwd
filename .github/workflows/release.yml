@@ -46,7 +46,11 @@ jobs:
           skip-version-file: "false"
           skip-on-empty: "true"
 
-      - name: Commit changelog
+      - name: Sync package.json version
+        if: steps.changelog.outputs.skipped == 'false'
+        run: npm pkg set version="${{ steps.changelog.outputs.version }}"
+
+      - name: Commit changelog and version
         if: steps.changelog.outputs.skipped == 'false'
         run: |
           git config user.name "github-actions[bot]"
