@@ -18,6 +18,9 @@ jobs:
   release:
     needs: ci
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.changelog.outputs.tag }}
+      skipped: ${{ steps.changelog.outputs.skipped }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -66,3 +69,32 @@ jobs:
           name: ${{ steps.changelog.outputs.tag }}
           body: ${{ steps.changelog.outputs.clean_changelog }}
           generateReleaseNotes: true
+
+  publish-npm:
+    if: needs.release.outputs.skipped == 'false'
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.release.outputs.tag }}
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+          package-manager-cache: false
+
+      - name: Upgrade npm
+        run: npm install -g npm@latest
+
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - run: pnpm run build
+
+      - run: npm publish --access public

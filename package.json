@@ -33,12 +33,22 @@
   "type": "module",
   "version": "0.0.0",
   "license": "MIT",
-  "bin": "dist/cli.js",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ikram-Maulana/kfwd.git"
+  },
+  "bin": {
+    "kfwd": "dist/src/cli.js"
+  },
   "engines": {
     "node": ">=22"
   },
   "files": [
-    "dist"
+    "dist/src"
   ],
   "ava": {
     "files": [
