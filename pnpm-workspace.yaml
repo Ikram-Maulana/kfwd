@@ -1,0 +1,6 @@
+minimumReleaseAge: 1440
+blockExoticSubdeps: true
+trustPolicy: no-downgrade
+allowBuilds:
+  lefthook: true
+  unrs-resolver: true
