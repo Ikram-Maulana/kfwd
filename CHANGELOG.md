@@ -1,4 +1,13 @@
-# 0.1.0 (2026-06-23)
+## [0.1.1](https://github.com/Ikram-Maulana/kfwd/compare/v0.1.0...v0.1.1) (2026-06-23)
+
+
+### Bug Fixes
+
+* resolve @/ path aliases in dist and fix global CLI entry detection ([39a0b0f](https://github.com/Ikram-Maulana/kfwd/commit/39a0b0fbe09ca780fded83713d9d3b55d92f4e4b))
+
+
+
+# [0.1.0](https://github.com/Ikram-Maulana/kfwd/compare/1a13b5079686e2bba48636d8c247a1eb4400a755...v0.1.0) (2026-06-23)
 
 
 ### Bug Fixes
