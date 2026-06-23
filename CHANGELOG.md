@@ -4,6 +4,7 @@
 ### Bug Fixes
 
 * hoist tsx loader from ava config into NODE_OPTIONS for test script ([fa4ace5](https://github.com/Ikram-Maulana/kfwd/commit/fa4ace5ef25da7ec1b5917cd3adcccc56202b0d3))
+* reorder tag-after-commit in release workflow, bump to 0.1.0 ([2286d84](https://github.com/Ikram-Maulana/kfwd/commit/2286d84550b1bbeb2952271438a0ff4c695e56de))
 * restore ava child-process workers for tsx loader compatibility ([d43795c](https://github.com/Ikram-Maulana/kfwd/commit/d43795c4f50e40fb2e4b9d016523097d86219eea))
 * scope ava test discovery to source test directory only ([f7df86b](https://github.com/Ikram-Maulana/kfwd/commit/f7df86b2c757e193667dc65ab73c16eb1cbef17b))
 
