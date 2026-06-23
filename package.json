@@ -32,7 +32,7 @@
     "deps:clean": "taze -w && pnpm clean && pnpm install && pnpm audit --fix override"
   },
   "type": "module",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "license": "MIT",
   "bin": "dist/cli.js",
   "engines": {
