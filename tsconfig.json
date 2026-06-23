@@ -3,8 +3,11 @@
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
     "strictNullChecks": true,
     "jsx": "react-jsx"
   },
-  "include": ["source", "test.tsx"]
+  "include": ["src", "test"]
 }

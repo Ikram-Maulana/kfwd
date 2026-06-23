@@ -1,7 +1,7 @@
 import test from "ava";
 import chalk from "chalk";
 import { render } from "ink-testing-library";
-import App from "./source/app.js";
+import App from "@/app.js";
 
 test("greet unknown user", (t) => {
   const { lastFrame } = render(<App name={undefined} />);
