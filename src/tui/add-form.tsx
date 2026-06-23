@@ -1,29 +1,13 @@
 import { Box, type Key, Text, useInput } from "ink";
 import { useState } from "react";
-import { type ResourceType, TYPES } from "@/types";
+import { type Forward, isResourceType, TYPES } from "@/types";
 import { ASCII_LOGO } from "./logo";
 
 type Step = "name" | "type" | "namespace" | "local" | "remote" | "confirm";
 
-interface Draft {
-  localPort?: number;
-  name?: string;
-  namespace?: string;
-  remotePort?: number;
-  type?: ResourceType;
-}
-
-type Resolved = import("@/types").FormResult;
-
 export interface AddFormProps {
-  defaults?: {
-    name?: string;
-    type?: ResourceType;
-    localPort?: number;
-    remotePort?: number;
-    namespace?: string;
-  };
-  onSubmit: (v: Resolved | null) => void;
+  defaults?: Partial<Forward>;
+  onSubmit: (v: Forward | null) => void;
 }
 
 const PORT_MIN = 1;
@@ -56,14 +40,18 @@ function nextStep(s: Step): Step {
   }
 }
 
-function applyDraft(d: Draft, step: Step, buffer: string): Draft {
+function applyDraft(
+  d: Partial<Forward>,
+  step: Step,
+  buffer: string
+): Partial<Forward> {
   switch (step) {
     case "name":
       return { ...d, name: buffer };
     case "type": {
       const raw = buffer.trim();
-      if (TYPES.includes(raw as ResourceType)) {
-        return { ...d, type: raw as ResourceType };
+      if (isResourceType(raw)) {
+        return { ...d, type: raw };
       }
       return d;
     }
@@ -91,9 +79,9 @@ function isValidTransition(step: Step, buffer: string): boolean {
     case "name":
       return buffer.trim().length > 0;
     case "type":
-      return TYPES.includes(buffer.trim() as ResourceType);
+      return isResourceType(buffer.trim());
     case "namespace":
-      return true; // Skippable/optional
+      return true;
     case "local":
     case "remote":
       return validPort(buffer) !== null;
@@ -104,35 +92,35 @@ function isValidTransition(step: Step, buffer: string): boolean {
   }
 }
 
-function buildResolved(d: Draft): Resolved {
+function buildResolved(d: Partial<Forward>): Forward {
   return {
     localPort: d.localPort ?? 0,
     name: d.name ?? "",
     namespace: d.namespace,
     remotePort: d.remotePort ?? 0,
-    type: d.type ?? "pod",
+    type: d.type ?? "service",
   };
 }
 
-const DEFAULTS: Draft = {};
-
 function getCurrentTypeIndex(val: string): number {
-  const idx = TYPES.indexOf(val as ResourceType);
-  return idx === -1 ? 0 : idx;
+  if (!isResourceType(val)) {
+    return 0;
+  }
+  return TYPES.indexOf(val);
 }
 
 interface ReturnKeyAction {
   error?: string | null;
   nextBuffer?: string;
-  nextDraft?: Draft;
+  nextDraft?: Partial<Forward>;
   nextStep?: Step;
-  submitValue?: Resolved | null;
+  submitValue?: Forward | null;
 }
 
 function processReturnKey(
   step: Step,
   buffer: string,
-  draft: Draft
+  draft: Partial<Forward>
 ): ReturnKeyAction {
   if (step === "confirm") {
     const answer = buffer.trim();
@@ -143,7 +131,7 @@ function processReturnKey(
 
   let currentVal = buffer;
   if (step === "type" && buffer === "") {
-    currentVal = "pod";
+    currentVal = "service";
   }
 
   if (isValidTransition(step, currentVal)) {
@@ -189,7 +177,7 @@ function processArrowKey(step: Step, buffer: string, key: Key): string | null {
 
 function applyReturnAction(
   action: ReturnKeyAction,
-  setDraft: React.Dispatch<React.SetStateAction<Draft>>,
+  setDraft: React.Dispatch<React.SetStateAction<Partial<Forward>>>,
   setStep: React.Dispatch<React.SetStateAction<Step>>,
   setBuffer: React.Dispatch<React.SetStateAction<string>>
 ) {
@@ -286,9 +274,9 @@ function Instructions({ step }: InstructionsProps) {
   );
 }
 
-export function AddForm({ defaults = DEFAULTS, onSubmit }: AddFormProps) {
+export function AddForm({ defaults = {}, onSubmit }: AddFormProps) {
   const [step, setStep] = useState<Step>("name");
-  const [draft, setDraft] = useState<Draft>(() => defaults);
+  const [draft, setDraft] = useState<Partial<Forward>>(() => defaults);
   const [buffer, setBuffer] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -396,7 +384,7 @@ export function AddForm({ defaults = DEFAULTS, onSubmit }: AddFormProps) {
               <Box flexDirection="row">
                 {TYPES.map((t) => {
                   const isSelected =
-                    buffer === t || (buffer === "" && t === "pod");
+                    buffer === t || (buffer === "" && t === "service");
                   return (
                     <Box
                       borderColor={isSelected ? "cyan" : "gray"}

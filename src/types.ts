@@ -3,6 +3,7 @@ export type ResourceType = "service" | "pod" | "deployment";
 export interface Forward {
   localPort: number;
   name: string;
+  namespace?: string;
   remotePort: number;
   type: ResourceType;
 }
@@ -24,14 +25,9 @@ export type StatusKind = "running" | "stopped";
 const NAME_RE = /^[a-z0-9-]+$/;
 const PORTS_RE = /^(\d+):(\d+)$/;
 export const TYPES: readonly ResourceType[] = ["pod", "service", "deployment"];
-export const VALID_TYPES: ReadonlySet<ResourceType> = new Set(TYPES);
 
-export interface FormResult {
-  localPort: number;
-  name: string;
-  namespace?: string;
-  remotePort: number;
-  type: ResourceType;
+export function isResourceType(s: string): s is ResourceType {
+  return (TYPES as readonly string[]).includes(s);
 }
 
 export function parsePorts(input: string): {
@@ -57,7 +53,7 @@ export function validateForward(f: Forward, existing: Forward[]): Forward {
   if (!NAME_RE.test(f.name)) {
     throw new Error(`invalid name "${f.name}" (use [a-z0-9-]+)`);
   }
-  if (!VALID_TYPES.has(f.type)) {
+  if (!isResourceType(f.type)) {
     throw new Error(`invalid type "${f.type}" (use service|pod|deployment)`);
   }
   if (

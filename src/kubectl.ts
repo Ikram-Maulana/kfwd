@@ -7,7 +7,7 @@ export function buildArgv(f: Forward, c: Config): string[] {
   if (c.kubeContext) {
     argv.push("--context", c.kubeContext);
   }
-  argv.push("-n", c.namespace);
+  argv.push("-n", f.namespace?.trim() || c.namespace);
   argv.push(
     "port-forward",
     `${f.type}/${f.name}`,

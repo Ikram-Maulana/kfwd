@@ -29,7 +29,7 @@ test("add direct mode validates and saves with service type", async (t) => {
   rmSync(dir, { recursive: true });
 });
 
-test("add direct mode validates and saves with default 'pod' type", async (t) => {
+test("add direct mode validates and saves with default 'service' type", async (t) => {
   const { dir, cfg } = fresh();
   const out: string[] = [];
   const deps: AddDeps = {
@@ -42,7 +42,7 @@ test("add direct mode validates and saves with default 'pod' type", async (t) =>
   await add({ name: "tx", ports: "3202:3202" }, deps);
   const forwards = cfg.load().forwards;
   t.is(forwards.length, 1);
-  t.is(forwards[0]?.type, "pod");
+  t.is(forwards[0]?.type, "service");
   t.true((out[0] ?? "").includes("saved"));
   rmSync(dir, { recursive: true });
 });

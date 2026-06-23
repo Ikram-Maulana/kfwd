@@ -117,7 +117,7 @@ test("AddForm collects namespace if provided", async (t) => {
   });
 });
 
-test("AddForm uses 'pod' as default type if skipped", async (t) => {
+test("AddForm uses 'service' as default type if skipped", async (t) => {
   let captured: unknown = "sentinel";
   const { stdin } = render(
     <AddForm
@@ -142,7 +142,7 @@ test("AddForm uses 'pod' as default type if skipped", async (t) => {
   await send("y");
   t.deepEqual(captured, {
     name: "tx",
-    type: "pod",
+    type: "service",
     namespace: undefined,
     localPort: 3202,
     remotePort: 3202,

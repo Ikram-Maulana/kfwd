@@ -1,10 +1,9 @@
 import { ConfigStore } from "@/config";
 import { AddForm } from "@/tui/add-form";
 import {
-  type FormResult,
+  type Forward,
+  isResourceType,
   parsePorts,
-  type ResourceType,
-  VALID_TYPES,
   validateForward,
 } from "@/types";
 
@@ -19,11 +18,11 @@ export interface AddInput {
 
 export interface AddDeps {
   cfg: ConfigStore;
-  collectForm?: () => Promise<FormResult | null>;
+  collectForm?: () => Promise<Forward | null>;
   stdout?: (s: string) => void;
 }
 
-async function defaultCollectForm(): Promise<FormResult | null> {
+async function defaultCollectForm(): Promise<Forward | null> {
   const { render } = await import("ink");
   return new Promise((resolve) => {
     const { unmount } = render(
@@ -47,7 +46,7 @@ export async function add(
   const out = deps.stdout ?? ((s) => console.log(s));
   const collect = deps.collectForm ?? defaultCollectForm;
 
-  let resolved: FormResult;
+  let resolved: Forward;
   if (!(input.name && input.ports) || input.interactive) {
     const v = await collect();
     if (!v) {
@@ -60,13 +59,14 @@ export async function add(
     }
   } else {
     const { localPort, remotePort } = parsePorts(input.ports);
-    const raw = input.type ?? "pod";
-    if (!VALID_TYPES.has(raw as ResourceType)) {
+    const raw = input.type ?? "service";
+    if (!isResourceType(raw)) {
       throw new Error(`invalid type "${raw}" (use service|pod|deployment)`);
     }
     resolved = {
       name: input.name,
-      type: raw as ResourceType,
+      namespace: input.namespace,
+      type: raw,
       localPort,
       remotePort,
     };

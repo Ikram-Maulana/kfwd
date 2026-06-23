@@ -7,8 +7,10 @@ export async function renderPick<T>(
     title: string;
   }
 ): Promise<T[]> {
-  const { render } = await import("ink");
-  const { MultiSelect } = await import("@/tui/multi-select");
+  const [{ render }, { MultiSelect }] = await Promise.all([
+    import("ink"),
+    import("@/tui/multi-select"),
+  ]);
   return new Promise<T[]>((resolve) => {
     const { unmount } = render(
       <MultiSelect
