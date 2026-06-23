@@ -12,5 +12,8 @@
     "strictNullChecks": true,
     "jsx": "react-jsx"
   },
-  "include": ["src", "test"]
+  "include": ["src", "test"],
+  "tsc-alias": {
+    "resolveFullPaths": true
+  }
 }
