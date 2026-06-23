@@ -20,14 +20,14 @@ export async function dispatch(argv: string[], h: Handlers): Promise<void> {
     case "add": {
       const cli = meow(
         `
-  Usage
-    $ kfwd add [name] [l:r]
+  \u001b[1;36mUSAGE\u001b[0m
+    $ \u001b[1mkfwd add\u001b[0m \u001b[36m[name] [l:r]\u001b[0m
 
-  Options
-    --type          Resource type: service|pod|deployment (default: service)
-    --namespace     Kubernetes namespace
-    --context       Kubernetes context
-    --interactive   Open the TUI form instead of positional args
+  \u001b[1;36mOPTIONS\u001b[0m
+    \u001b[1;33m--type\u001b[0m          Resource type: service|pod|deployment \u001b[90m(default: pod)\u001b[0m
+    \u001b[1;33m--namespace\u001b[0m     Kubernetes namespace
+    \u001b[1;33m--context\u001b[0m       Kubernetes context
+    \u001b[1;33m--interactive\u001b[0m   Open the TUI form instead of positional args
 `,
         {
           importMeta: import.meta,
@@ -72,15 +72,22 @@ export async function dispatch(argv: string[], h: Handlers): Promise<void> {
 }
 
 const HELP = `
-  Usage
-    $ kfwd <command> [...]
+\u001b[36m ____  __._____________      __________   
+|    |/ _|\\_   _____/  \\    /  \\______ \\  
+|      <   |    __) \\   \\/\\/   /|    |  \\ 
+|    |  \\  |     \\   \\        / |    \`   \\
+|____|__ \\ \\___  /    \\__/\\  / /_______  /
+        \\/     \\/          \\/          \\/ \u001b[0m
 
-  Commands
-    add [name] [l:r]    Save a forward rule
-    remove <name>       Delete a rule + kill running pid
-    start               TUI multi-select → spawn detached
-    stop                TUI multi-select → kill
-    status              Table of all rules + run state
+  \u001b[1;36mUSAGE\u001b[0m
+    $ \u001b[1mkfwd\u001b[0m \u001b[36m<command>\u001b[0m \u001b[90m[...]\u001b[0m
+
+  \u001b[1;36mCOMMANDS\u001b[0m
+    \u001b[1;33madd\u001b[0m \u001b[36m[name] [l:r]\u001b[0m      \u001b[90m➔\u001b[0m Save a port forward rule
+    \u001b[1;33mremove\u001b[0m \u001b[36m<name>\u001b[0m        \u001b[90m➔\u001b[0m Delete a rule + kill running pid
+    \u001b[1;33mstart\u001b[0m               \u001b[90m➔\u001b[0m TUI multi-select ➔ spawn detached
+    \u001b[1;33mstop\u001b[0m                \u001b[90m➔\u001b[0m TUI multi-select ➔ kill
+    \u001b[1;33mstatus\u001b[0m              \u001b[90m➔\u001b[0m Table of all rules + run state
 `;
 
 if (import.meta.url === `file://${process.argv[1]}`) {

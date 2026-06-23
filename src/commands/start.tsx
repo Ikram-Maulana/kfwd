@@ -1,8 +1,8 @@
+import { renderPick } from "@/command-base";
 import { ConfigStore } from "@/config";
 import { buildArgv, type SpawnResult, spawnDetached } from "@/kubectl";
 import { RunsStore } from "@/runs";
 import { forwardLabel } from "@/tui/format";
-import { MultiSelect } from "@/tui/multi-select";
 import type { Forward } from "@/types";
 
 export interface StartDeps {
@@ -16,26 +16,6 @@ export interface StartDeps {
   stdout?: (s: string) => void;
 }
 
-async function defaultPick(
-  items: Forward[],
-  runningOf: (f: Forward) => boolean
-): Promise<Forward[]> {
-  const { render } = await import("ink");
-  return new Promise<Forward[]>((resolve) => {
-    const { unmount } = render(
-      <MultiSelect
-        items={items}
-        labelOf={forwardLabel}
-        onSubmit={(sel) => {
-          unmount();
-          resolve(sel);
-        }}
-        runningOf={runningOf}
-      />
-    );
-  });
-}
-
 export async function start(deps: Partial<StartDeps> = {}): Promise<void> {
   const { pathsFromEnv } = await import("../paths.js");
   const p = pathsFromEnv();
@@ -43,7 +23,6 @@ export async function start(deps: Partial<StartDeps> = {}): Promise<void> {
   const runs = deps.runs ?? new RunsStore(p.runsDir);
   const spawnFn = deps.spawnFn ?? spawnDetached;
   const out = deps.stdout ?? ((s) => console.log(s));
-  const pick = deps.pickSelected ?? defaultPick;
 
   const config = cfg.load();
   const items = config.forwards;
@@ -51,6 +30,15 @@ export async function start(deps: Partial<StartDeps> = {}): Promise<void> {
     out("kfwd: no forwards configured. Run `kfwd add <name> <l:r>` first.");
     return;
   }
+
+  const pick =
+    deps.pickSelected ??
+    ((it: Forward[], ro: (f: Forward) => boolean) =>
+      renderPick(it, {
+        labelOf: forwardLabel,
+        runningOf: ro,
+        title: "Select Port Forward Rules to Start",
+      }));
 
   const selected = await pick(items, (f) => runs.isAlive(f.name));
   const fresh = selected.filter((f) => !runs.isAlive(f.name));

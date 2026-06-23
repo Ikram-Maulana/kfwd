@@ -13,7 +13,7 @@ function fresh() {
   };
 }
 
-test("add direct mode validates and saves", async (t) => {
+test("add direct mode validates and saves with service type", async (t) => {
   const { dir, cfg } = fresh();
   const out: string[] = [];
   const deps: AddDeps = {
@@ -25,6 +25,24 @@ test("add direct mode validates and saves", async (t) => {
   };
   await add({ name: "tx", ports: "3202:3202", type: "service" }, deps);
   t.is(cfg.load().forwards.length, 1);
+  t.true((out[0] ?? "").includes("saved"));
+  rmSync(dir, { recursive: true });
+});
+
+test("add direct mode validates and saves with default 'pod' type", async (t) => {
+  const { dir, cfg } = fresh();
+  const out: string[] = [];
+  const deps: AddDeps = {
+    cfg,
+    stdout: (s) => out.push(s),
+    collectForm: () => {
+      throw new Error("should not be called");
+    },
+  };
+  await add({ name: "tx", ports: "3202:3202" }, deps);
+  const forwards = cfg.load().forwards;
+  t.is(forwards.length, 1);
+  t.is(forwards[0]?.type, "pod");
   t.true((out[0] ?? "").includes("saved"));
   rmSync(dir, { recursive: true });
 });

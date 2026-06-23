@@ -23,11 +23,16 @@ export type StatusKind = "running" | "stopped";
 
 const NAME_RE = /^[a-z0-9-]+$/;
 const PORTS_RE = /^(\d+):(\d+)$/;
-export const VALID_TYPES: ReadonlySet<ResourceType> = new Set([
-  "service",
-  "pod",
-  "deployment",
-]);
+export const TYPES: readonly ResourceType[] = ["pod", "service", "deployment"];
+export const VALID_TYPES: ReadonlySet<ResourceType> = new Set(TYPES);
+
+export interface FormResult {
+  localPort: number;
+  name: string;
+  namespace?: string;
+  remotePort: number;
+  type: ResourceType;
+}
 
 export function parsePorts(input: string): {
   localPort: number;

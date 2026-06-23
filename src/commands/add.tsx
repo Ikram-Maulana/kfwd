@@ -1,6 +1,7 @@
 import { ConfigStore } from "@/config";
 import { AddForm } from "@/tui/add-form";
 import {
+  type FormResult,
   parsePorts,
   type ResourceType,
   VALID_TYPES,
@@ -18,21 +19,11 @@ export interface AddInput {
 
 export interface AddDeps {
   cfg: ConfigStore;
-  collectForm?: () => Promise<{
-    name: string;
-    type: ResourceType;
-    localPort: number;
-    remotePort: number;
-  } | null>;
+  collectForm?: () => Promise<FormResult | null>;
   stdout?: (s: string) => void;
 }
 
-async function defaultCollectForm(): Promise<{
-  name: string;
-  type: ResourceType;
-  localPort: number;
-  remotePort: number;
-} | null> {
+async function defaultCollectForm(): Promise<FormResult | null> {
   const { render } = await import("ink");
   return new Promise((resolve) => {
     const { unmount } = render(
@@ -56,12 +47,7 @@ export async function add(
   const out = deps.stdout ?? ((s) => console.log(s));
   const collect = deps.collectForm ?? defaultCollectForm;
 
-  let resolved: {
-    name: string;
-    type: ResourceType;
-    localPort: number;
-    remotePort: number;
-  };
+  let resolved: FormResult;
   if (!(input.name && input.ports) || input.interactive) {
     const v = await collect();
     if (!v) {
@@ -69,9 +55,12 @@ export async function add(
       return;
     }
     resolved = v;
+    if (v.namespace) {
+      input.namespace = v.namespace;
+    }
   } else {
     const { localPort, remotePort } = parsePorts(input.ports);
-    const raw = input.type ?? "service";
+    const raw = input.type ?? "pod";
     if (!VALID_TYPES.has(raw as ResourceType)) {
       throw new Error(`invalid type "${raw}" (use service|pod|deployment)`);
     }

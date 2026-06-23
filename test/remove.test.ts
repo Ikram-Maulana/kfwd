@@ -38,3 +38,29 @@ test("remove on missing name is a no-op print", async (t) => {
   t.true((out[0] ?? "").includes("not found"));
   rmSync(dir, { recursive: true });
 });
+
+test("remove with empty name shows selection and deletes chosen rules", async (t) => {
+  const { dir, cfg, runs } = fresh();
+  cfg.add({ name: "tx", type: "service", localPort: 3202, remotePort: 3202 });
+  cfg.add({ name: "cfg", type: "service", localPort: 3201, remotePort: 3201 });
+  runs.recordSpawn("tx", { pid: process.pid, startedAt: 0, cmdline: ["x"] });
+
+  const killed: number[] = [];
+  const out: string[] = [];
+  await remove("", {
+    cfg,
+    runs,
+    killFn: (pid) => {
+      killed.push(pid);
+      return Promise.resolve();
+    },
+    stdout: (s) => out.push(s),
+    pickSelected: async (items) => items.filter((it) => it.name === "tx"),
+  });
+
+  t.is(cfg.load().forwards.length, 1);
+  t.is(cfg.load().forwards[0]?.name, "cfg");
+  t.deepEqual(killed, [process.pid]);
+  t.true(out.some((s) => s.includes('removed "tx"')));
+  rmSync(dir, { recursive: true });
+});

@@ -71,8 +71,8 @@ kfwd <command> [...]
 
 | Command | Description |
 |---------|-------------|
-| `add [name] [l:r]` | Save a forward rule |
-| `remove <name>` | Delete a rule + kill running process |
+| `add [name] [l:r]` | Save a forward rule (TUI form if name/ports omitted) |
+| `remove [name]` | Delete a rule + kill running process (TUI multi-select if name omitted) |
 | `start` | TUI multi-select → spawn detached |
 | `stop` | TUI multi-select → kill |
 | `status` | Table of all rules + run state |
@@ -82,8 +82,8 @@ kfwd <command> [...]
 
 | Flag | Description | Default |
 |------|-------------|---------|
-| `--type` | Resource type: `service`, `pod`, `deployment` | `service` |
-| `--namespace` | Kubernetes namespace | `default` |
+| `--type` | Resource type: `service`, `pod`, `deployment` | `pod` |
+| `--namespace` | Kubernetes namespace (skippable in TUI form) | `default` |
 | `--context` | Kubernetes context | current context |
 | `--interactive` | Open TUI form instead of positional args | `false` |
 
@@ -92,11 +92,14 @@ kfwd <command> [...]
 ## Examples
 
 ```bash
-# Save a service forward
-kfwd add my-app 8080:80
+# Save a pod forward (defaults to pod type)
+kfwd add debug-pod 3000:3000
 
-# Save a pod forward in staging
-kfwd add debug-pod 3000:3000 --type=pod --namespace=staging
+# Save a service forward explicitly
+kfwd add my-app 8080:80 --type=service
+
+# Save a pod forward in staging namespace
+kfwd add staging-app 8080:80 --namespace=staging
 
 # Save with specific kube context
 kfwd add prod-db 5432:5432 --context=production
