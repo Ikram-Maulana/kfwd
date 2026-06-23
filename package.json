@@ -42,6 +42,9 @@
     "dist"
   ],
   "ava": {
+    "files": [
+      "test/**/*"
+    ],
     "extensions": [
       "ts",
       "tsx"
