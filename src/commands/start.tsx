@@ -16,6 +16,30 @@ export interface StartDeps {
   stdout?: (s: string) => void;
 }
 
+function spawnOne(
+  f: Forward,
+  config: Config,
+  runs: RunsStore,
+  spawnFn: (argv: string[], logPath: string) => SpawnResult,
+  out: (s: string) => void
+): boolean {
+  try {
+    const argv = buildArgv(f, config);
+    const { pid, cmdline } = spawnFn(argv, runs.logPath(f.name));
+    if (pid > 0) {
+      runs.recordSpawn(f.name, { pid, startedAt: Date.now(), cmdline });
+      out(`kfwd: spawned "${f.name}" pid=${pid}`);
+      return true;
+    }
+    out(`kfwd: failed to spawn "${f.name}"`);
+    return false;
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    out(`kfwd: failed to spawn "${f.name}": ${msg}`);
+    return false;
+  }
+}
+
 function startAll(
   items: Forward[],
   config: Config,
@@ -30,19 +54,8 @@ function startAll(
   }
   let started = 0;
   for (const f of fresh) {
-    try {
-      const argv = buildArgv(f, config);
-      const { pid, cmdline } = spawnFn(argv, runs.logPath(f.name));
-      if (pid > 0) {
-        runs.recordSpawn(f.name, { pid, startedAt: Date.now(), cmdline });
-        out(`kfwd: spawned "${f.name}" pid=${pid}`);
-        started++;
-      } else {
-        out(`kfwd: failed to spawn "${f.name}"`);
-      }
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      out(`kfwd: failed to spawn "${f.name}": ${msg}`);
+    if (spawnOne(f, config, runs, spawnFn, out)) {
+      started++;
     }
   }
   out(`kfwd: started ${started} forwards`);
@@ -82,15 +95,11 @@ export async function start(
 
   const selected = await pick(items, (f) => runs.isAlive(f.name));
   const fresh = selected.filter((f) => !runs.isAlive(f.name));
+  let started = 0;
   for (const f of fresh) {
-    const argv = buildArgv(f, config);
-    const { pid, cmdline } = spawnFn(argv, runs.logPath(f.name));
-    if (pid > 0) {
-      runs.recordSpawn(f.name, { pid, startedAt: Date.now(), cmdline });
-      out(`kfwd: spawned "${f.name}" pid=${pid}`);
-    } else {
-      out(`kfwd: failed to spawn "${f.name}"`);
+    if (spawnOne(f, config, runs, spawnFn, out)) {
+      started++;
     }
   }
-  out(`kfwd: started ${fresh.length} forwards`);
+  out(`kfwd: started ${started} forwards`);
 }
