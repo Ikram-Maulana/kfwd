@@ -33,6 +33,84 @@ export function spawnDetached(argv: string[], logPath: string): SpawnResult {
   return { pid, cmdline: argv };
 }
 
+const SUPERVISOR_SCRIPT = `
+const { spawn } = require("child_process");
+const { appendFileSync } = require("fs");
+
+const cmd = JSON.parse(process.argv[2]);
+const logPath = process.argv[3];
+const initialDelay = 1000;
+const maxDelay = 30_000;
+
+let delay = initialDelay;
+let restarts = 0;
+let active = null;
+let stopping = false;
+
+function log(msg) {
+  const line = "[" + new Date().toISOString() + "] " + msg + "\\n";
+  try { appendFileSync(logPath, line); } catch {}
+}
+
+function cleanup() {
+  stopping = true;
+  if (active && !active.killed) {
+    try { active.kill("SIGTERM"); } catch {}
+  }
+  process.exit(0);
+}
+
+process.on("SIGTERM", cleanup);
+process.on("SIGINT", cleanup);
+
+function run() {
+  if (stopping) return;
+  active = spawn(cmd[0], cmd.slice(1), {
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+
+  active.stdout.on("data", (d) => {
+    try { appendFileSync(logPath, d); } catch {}
+  });
+  active.stderr.on("data", (d) => {
+    try { appendFileSync(logPath, d); } catch {}
+  });
+
+  active.on("error", (err) => {
+    log("ERROR: " + err.message);
+  });
+
+  active.on("exit", (code, signal) => {
+    if (stopping) return;
+    log("kubectl exited (code=" + code + ", signal=" + signal + ")");
+    restarts++;
+    const wait = Math.min(delay, maxDelay);
+    log("Restarting in " + (wait / 1000) + "s (restart #" + restarts + ")");
+    delay = Math.min(delay * 2, maxDelay);
+    setTimeout(run, wait);
+  });
+}
+
+log("Supervisor started for: " + cmd.join(" "));
+run();
+`;
+
+export function spawnSupervised(argv: string[], logPath: string): SpawnResult {
+  const logFd = openSync(logPath, "a");
+  const child = spawn(
+    process.execPath,
+    ["-e", SUPERVISOR_SCRIPT, JSON.stringify(argv), logPath],
+    {
+      detached: true,
+      stdio: ["ignore", logFd, logFd],
+      windowsHide: true,
+    }
+  );
+  child.unref();
+  const pid = child.pid ?? -1;
+  return { pid, cmdline: argv };
+}
+
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 const { platform } = process;
 

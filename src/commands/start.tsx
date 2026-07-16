@@ -1,6 +1,6 @@
 import { renderPick } from "@/command-base";
 import { ConfigStore } from "@/config";
-import { buildArgv, type SpawnResult, spawnDetached } from "@/kubectl";
+import { buildArgv, type SpawnResult, spawnSupervised } from "@/kubectl";
 import { RunsStore } from "@/runs";
 import { forwardLabel } from "@/tui/format";
 import type { Forward } from "@/types";
@@ -24,7 +24,7 @@ export async function start(
   const p = pathsFromEnv();
   const cfg = deps.cfg ?? new ConfigStore(p.configFile);
   const runs = deps.runs ?? new RunsStore(p.runsDir);
-  const spawnFn = deps.spawnFn ?? spawnDetached;
+  const spawnFn = deps.spawnFn ?? spawnSupervised;
   const out = deps.stdout ?? ((s) => console.log(s));
 
   const config = cfg.load();
