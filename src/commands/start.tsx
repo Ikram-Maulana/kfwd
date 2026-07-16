@@ -3,7 +3,7 @@ import { ConfigStore } from "@/config";
 import { buildArgv, type SpawnResult, spawnSupervised } from "@/kubectl";
 import { RunsStore } from "@/runs";
 import { forwardLabel } from "@/tui/format";
-import type { Forward } from "@/types";
+import type { Config, Forward } from "@/types";
 
 export interface StartDeps {
   cfg: ConfigStore;
@@ -14,6 +14,38 @@ export interface StartDeps {
   runs: RunsStore;
   spawnFn?: (argv: string[], logPath: string) => SpawnResult;
   stdout?: (s: string) => void;
+}
+
+function startAll(
+  items: Forward[],
+  config: Config,
+  runs: RunsStore,
+  spawnFn: (argv: string[], logPath: string) => SpawnResult,
+  out: (s: string) => void
+): void {
+  const fresh = items.filter((f) => !runs.isAlive(f.name));
+  if (fresh.length === 0) {
+    out("kfwd: nothing to start (all forwards already running)");
+    return;
+  }
+  let started = 0;
+  for (const f of fresh) {
+    try {
+      const argv = buildArgv(f, config);
+      const { pid, cmdline } = spawnFn(argv, runs.logPath(f.name));
+      if (pid > 0) {
+        runs.recordSpawn(f.name, { pid, startedAt: Date.now(), cmdline });
+        out(`kfwd: spawned "${f.name}" pid=${pid}`);
+        started++;
+      } else {
+        out(`kfwd: failed to spawn "${f.name}"`);
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      out(`kfwd: failed to spawn "${f.name}": ${msg}`);
+    }
+  }
+  out(`kfwd: started ${started} forwards`);
 }
 
 export async function start(
@@ -35,24 +67,7 @@ export async function start(
   }
 
   if (opts.all) {
-    const fresh = items.filter((f) => !runs.isAlive(f.name));
-    if (fresh.length === 0) {
-      out("kfwd: nothing to start (all forwards already running)");
-      return;
-    }
-    let started = 0;
-    for (const f of fresh) {
-      const argv = buildArgv(f, config);
-      const { pid, cmdline } = spawnFn(argv, runs.logPath(f.name));
-      if (pid > 0) {
-        runs.recordSpawn(f.name, { pid, startedAt: Date.now(), cmdline });
-        out(`kfwd: spawned "${f.name}" pid=${pid}`);
-        started++;
-      } else {
-        out(`kfwd: failed to spawn "${f.name}"`);
-      }
-    }
-    out(`kfwd: started ${started} forwards`);
+    startAll(items, config, runs, spawnFn, out);
     return;
   }
 
