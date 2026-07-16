@@ -79,18 +79,26 @@ function run() {
     try { appendFileSync(logPath, d); } catch {}
   });
 
-  active.on("error", (err) => {
-    log("ERROR: " + err.message);
-  });
-
-  active.on("exit", (code, signal) => {
-    if (stopping) return;
-    log("kubectl exited (code=" + code + ", signal=" + signal + ")");
+  let restarting = false;
+  function scheduleRestart() {
+    if (stopping || restarting) return;
+    restarting = true;
     restarts++;
     const wait = Math.min(delay, maxDelay);
     log("Restarting in " + (wait / 1000) + "s (restart #" + restarts + ")");
     delay = Math.min(delay * 2, maxDelay);
     setTimeout(run, wait);
+  }
+
+  active.on("error", (err) => {
+    log("ERROR: " + err.message);
+    scheduleRestart();
+  });
+
+  active.on("exit", (code, signal) => {
+    if (stopping) return;
+    log("kubectl exited (code=" + code + ", signal=" + signal + ")");
+    scheduleRestart();
   });
 }
 
