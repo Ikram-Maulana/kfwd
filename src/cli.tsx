@@ -16,6 +16,26 @@ export interface Handlers {
   stop: (opts?: { all?: boolean }) => Promise<void> | void;
 }
 
+function parseAllFlag(argv: string[], cmd: string) {
+  const cli = meow(
+    `
+  \u001b[1;36mUSAGE\u001b[0m
+    $ \u001b[1mkfwd ${cmd}\u001b[0m \u001b[90m[options]\u001b[0m
+
+  \u001b[1;36mOPTIONS\u001b[0m
+    \u001b[1;33m--all, -a\u001b[0m   Operate on every configured forward (skip TUI)
+`,
+    {
+      argv,
+      importMeta: import.meta,
+      flags: {
+        all: { type: "boolean", shortFlag: "a" },
+      },
+    }
+  );
+  return cli.flags.all;
+}
+
 export async function dispatch(argv: string[], h: Handlers): Promise<void> {
   const [cmd, ...rest] = argv;
   switch (cmd) {
@@ -54,46 +74,12 @@ export async function dispatch(argv: string[], h: Handlers): Promise<void> {
     case "remove":
       await h.remove(String(rest[0] ?? ""));
       return;
-    case "start": {
-      const cli = meow(
-        `
-  \u001b[1;36mUSAGE\u001b[0m
-    $ \u001b[1mkfwd start\u001b[0m \u001b[90m[options]\u001b[0m
-
-  \u001b[1;36mOPTIONS\u001b[0m
-    \u001b[1;33m--all, -a\u001b[0m   Operate on every configured forward (skip TUI)
-`,
-        {
-          argv: rest,
-          importMeta: import.meta,
-          flags: {
-            all: { type: "boolean", shortFlag: "a" },
-          },
-        }
-      );
-      await h.start({ all: cli.flags.all });
+    case "start":
+      await h.start({ all: parseAllFlag(rest, "start") });
       return;
-    }
-    case "stop": {
-      const cli = meow(
-        `
-  \u001b[1;36mUSAGE\u001b[0m
-    $ \u001b[1mkfwd stop\u001b[0m \u001b[90m[options]\u001b[0m
-
-  \u001b[1;36mOPTIONS\u001b[0m
-    \u001b[1;33m--all, -a\u001b[0m   Operate on every configured forward (skip TUI)
-`,
-        {
-          argv: rest,
-          importMeta: import.meta,
-          flags: {
-            all: { type: "boolean", shortFlag: "a" },
-          },
-        }
-      );
-      await h.stop({ all: cli.flags.all });
+    case "stop":
+      await h.stop({ all: parseAllFlag(rest, "stop") });
       return;
-    }
     case "status":
       await h.status();
       return;
