@@ -11,9 +11,29 @@ import { stop } from "./commands/stop.js";
 export interface Handlers {
   add: (input: AddInput) => Promise<void> | void;
   remove: (name: string) => Promise<void> | void;
-  start: () => Promise<void> | void;
+  start: (opts?: { all?: boolean }) => Promise<void> | void;
   status: () => Promise<void> | void;
-  stop: () => Promise<void> | void;
+  stop: (opts?: { all?: boolean }) => Promise<void> | void;
+}
+
+function parseAllFlag(argv: string[], cmd: string) {
+  const cli = meow(
+    `
+  \u001b[1;36mUSAGE\u001b[0m
+    $ \u001b[1mkfwd ${cmd}\u001b[0m \u001b[90m[options]\u001b[0m
+
+  \u001b[1;36mOPTIONS\u001b[0m
+    \u001b[1;33m--all, -a\u001b[0m   Operate on every configured forward (skip TUI)
+`,
+    {
+      argv,
+      importMeta: import.meta,
+      flags: {
+        all: { type: "boolean", shortFlag: "a" },
+      },
+    }
+  );
+  return cli.flags.all;
 }
 
 export async function dispatch(argv: string[], h: Handlers): Promise<void> {
@@ -55,10 +75,10 @@ export async function dispatch(argv: string[], h: Handlers): Promise<void> {
       await h.remove(String(rest[0] ?? ""));
       return;
     case "start":
-      await h.start();
+      await h.start({ all: parseAllFlag(rest, "start") });
       return;
     case "stop":
-      await h.stop();
+      await h.stop({ all: parseAllFlag(rest, "stop") });
       return;
     case "status":
       await h.status();
@@ -89,8 +109,8 @@ const HELP = `
   \u001b[1;36mCOMMANDS\u001b[0m
     \u001b[1;33madd\u001b[0m \u001b[36m[name] [l:r]\u001b[0m      \u001b[90m➔\u001b[0m Save a port forward rule
     \u001b[1;33mremove\u001b[0m \u001b[36m<name>\u001b[0m        \u001b[90m➔\u001b[0m Delete a rule + kill running pid
-    \u001b[1;33mstart\u001b[0m               \u001b[90m➔\u001b[0m TUI multi-select ➔ spawn detached
-    \u001b[1;33mstop\u001b[0m                \u001b[90m➔\u001b[0m TUI multi-select ➔ kill
+    \u001b[1;33mstart\u001b[0m \u001b[90m[--all]\u001b[0m          \u001b[90m➔\u001b[0m TUI multi-select ➔ spawn detached
+    \u001b[1;33mstop\u001b[0m \u001b[90m[--all]\u001b[0m           \u001b[90m➔\u001b[0m TUI multi-select ➔ kill
     \u001b[1;33mstatus\u001b[0m              \u001b[90m➔\u001b[0m Table of all rules + run state
 `;
 
@@ -102,8 +122,8 @@ if (
   await dispatch([cmd ?? "", ...rest], {
     add,
     remove,
-    start,
+    start: (opts?) => start(undefined, opts),
     status,
-    stop,
+    stop: (opts?) => stop(undefined, opts),
   });
 }

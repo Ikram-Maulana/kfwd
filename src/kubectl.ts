@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { openSync } from "node:fs";
+import { closeSync, openSync } from "node:fs";
 import type { Config, Forward } from "@/types";
 
 export function buildArgv(f: Forward, c: Config): string[] {
@@ -29,6 +29,97 @@ export function spawnDetached(argv: string[], logPath: string): SpawnResult {
     windowsHide: true,
   });
   child.unref();
+  closeSync(logFd);
+  const pid = child.pid ?? -1;
+  return { pid, cmdline: argv };
+}
+
+const SUPERVISOR_SCRIPT = `
+const { spawn } = require("child_process");
+const { appendFileSync } = require("fs");
+
+const cmd = JSON.parse(process.argv[1]);
+const logPath = process.argv[2];
+const initialDelay = 1000;
+const maxDelay = 30_000;
+
+let delay = initialDelay;
+let restarts = 0;
+let active = null;
+let stopping = false;
+
+function log(msg) {
+  const line = "[" + new Date().toISOString() + "] " + msg + "\\n";
+  try { appendFileSync(logPath, line); } catch {}
+}
+
+function cleanup() {
+  stopping = true;
+  if (active && !active.killed) {
+    active.on("exit", () => process.exit(0));
+    try { active.kill("SIGTERM"); } catch {}
+    setTimeout(() => process.exit(0), 5000);
+  } else {
+    process.exit(0);
+  }
+}
+
+process.on("SIGTERM", cleanup);
+process.on("SIGINT", cleanup);
+
+function run() {
+  if (stopping) return;
+  active = spawn(cmd[0], cmd.slice(1), {
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+
+  active.stdout.on("data", (d) => {
+    try { appendFileSync(logPath, d); } catch {}
+  });
+  active.stderr.on("data", (d) => {
+    try { appendFileSync(logPath, d); } catch {}
+  });
+
+  let restarting = false;
+  function scheduleRestart() {
+    if (stopping || restarting) return;
+    restarting = true;
+    restarts++;
+    const wait = Math.min(delay, maxDelay);
+    log("Restarting in " + (wait / 1000) + "s (restart #" + restarts + ")");
+    delay = Math.min(delay * 2, maxDelay);
+    setTimeout(run, wait);
+  }
+
+  active.on("error", (err) => {
+    log("ERROR: " + err.message);
+    scheduleRestart();
+  });
+
+  active.on("exit", (code, signal) => {
+    if (stopping) return;
+    log("kubectl exited (code=" + code + ", signal=" + signal + ")");
+    scheduleRestart();
+  });
+}
+
+log("Supervisor started for: " + cmd.join(" "));
+run();
+`;
+
+export function spawnSupervised(argv: string[], logPath: string): SpawnResult {
+  const logFd = openSync(logPath, "a");
+  const child = spawn(
+    process.execPath,
+    ["-e", SUPERVISOR_SCRIPT, JSON.stringify(argv), logPath],
+    {
+      detached: true,
+      stdio: ["ignore", logFd, logFd],
+      windowsHide: true,
+    }
+  );
+  child.unref();
+  closeSync(logFd);
   const pid = child.pid ?? -1;
   return { pid, cmdline: argv };
 }
