@@ -37,8 +37,8 @@ const SUPERVISOR_SCRIPT = `
 const { spawn } = require("child_process");
 const { appendFileSync } = require("fs");
 
-const cmd = JSON.parse(process.argv[2]);
-const logPath = process.argv[3];
+const cmd = JSON.parse(process.argv[1]);
+const logPath = process.argv[2];
 const initialDelay = 1000;
 const maxDelay = 30_000;
 
