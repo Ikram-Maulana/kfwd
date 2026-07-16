@@ -40,17 +40,19 @@ export async function start(
       out("kfwd: nothing to start (all forwards already running)");
       return;
     }
+    let started = 0;
     for (const f of fresh) {
       const argv = buildArgv(f, config);
       const { pid, cmdline } = spawnFn(argv, runs.logPath(f.name));
       if (pid > 0) {
         runs.recordSpawn(f.name, { pid, startedAt: Date.now(), cmdline });
         out(`kfwd: spawned "${f.name}" pid=${pid}`);
+        started++;
       } else {
         out(`kfwd: failed to spawn "${f.name}"`);
       }
     }
-    out(`kfwd: started ${fresh.length} forwards`);
+    out(`kfwd: started ${started} forwards`);
     return;
   }
 
