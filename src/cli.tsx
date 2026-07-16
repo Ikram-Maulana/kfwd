@@ -11,9 +11,9 @@ import { stop } from "./commands/stop.js";
 export interface Handlers {
   add: (input: AddInput) => Promise<void> | void;
   remove: (name: string) => Promise<void> | void;
-  start: () => Promise<void> | void;
+  start: (opts?: { all?: boolean }) => Promise<void> | void;
   status: () => Promise<void> | void;
-  stop: () => Promise<void> | void;
+  stop: (opts?: { all?: boolean }) => Promise<void> | void;
 }
 
 export async function dispatch(argv: string[], h: Handlers): Promise<void> {
@@ -54,12 +54,46 @@ export async function dispatch(argv: string[], h: Handlers): Promise<void> {
     case "remove":
       await h.remove(String(rest[0] ?? ""));
       return;
-    case "start":
-      await h.start();
+    case "start": {
+      const cli = meow(
+        `
+  \u001b[1;36mUSAGE\u001b[0m
+    $ \u001b[1mkfwd start\u001b[0m \u001b[90m[options]\u001b[0m
+
+  \u001b[1;36mOPTIONS\u001b[0m
+    \u001b[1;33m--all, -a\u001b[0m   Operate on every configured forward (skip TUI)
+`,
+        {
+          argv: rest,
+          importMeta: import.meta,
+          flags: {
+            all: { type: "boolean", shortFlag: "a" },
+          },
+        }
+      );
+      await h.start({ all: cli.flags.all });
       return;
-    case "stop":
-      await h.stop();
+    }
+    case "stop": {
+      const cli = meow(
+        `
+  \u001b[1;36mUSAGE\u001b[0m
+    $ \u001b[1mkfwd stop\u001b[0m \u001b[90m[options]\u001b[0m
+
+  \u001b[1;36mOPTIONS\u001b[0m
+    \u001b[1;33m--all, -a\u001b[0m   Operate on every configured forward (skip TUI)
+`,
+        {
+          argv: rest,
+          importMeta: import.meta,
+          flags: {
+            all: { type: "boolean", shortFlag: "a" },
+          },
+        }
+      );
+      await h.stop({ all: cli.flags.all });
       return;
+    }
     case "status":
       await h.status();
       return;
@@ -89,8 +123,8 @@ const HELP = `
   \u001b[1;36mCOMMANDS\u001b[0m
     \u001b[1;33madd\u001b[0m \u001b[36m[name] [l:r]\u001b[0m      \u001b[90m➔\u001b[0m Save a port forward rule
     \u001b[1;33mremove\u001b[0m \u001b[36m<name>\u001b[0m        \u001b[90m➔\u001b[0m Delete a rule + kill running pid
-    \u001b[1;33mstart\u001b[0m               \u001b[90m➔\u001b[0m TUI multi-select ➔ spawn detached
-    \u001b[1;33mstop\u001b[0m                \u001b[90m➔\u001b[0m TUI multi-select ➔ kill
+    \u001b[1;33mstart\u001b[0m \u001b[90m[--all]\u001b[0m          \u001b[90m➔\u001b[0m TUI multi-select ➔ spawn detached
+    \u001b[1;33mstop\u001b[0m \u001b[90m[--all]\u001b[0m           \u001b[90m➔\u001b[0m TUI multi-select ➔ kill
     \u001b[1;33mstatus\u001b[0m              \u001b[90m➔\u001b[0m Table of all rules + run state
 `;
 
@@ -102,8 +136,8 @@ if (
   await dispatch([cmd ?? "", ...rest], {
     add,
     remove,
-    start,
+    start: (opts?) => start(undefined, opts),
     status,
-    stop,
+    stop: (opts?) => stop(undefined, opts),
   });
 }

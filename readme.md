@@ -65,8 +65,8 @@ kfwd <command> [...]
 |---------|-------------|
 | `add [name] [l:r]` | Save a forward rule (TUI form if name/ports omitted) |
 | `remove [name]` | Delete a rule + kill running process (TUI multi-select if name omitted) |
-| `start` | TUI multi-select → spawn detached |
-| `stop` | TUI multi-select → kill |
+| `start [--all]` | TUI multi-select → spawn detached (`--all` starts every stopped forward) |
+| `stop [--all]` | TUI multi-select → kill (`--all` kills every running forward) |
 | `status` | Table of all rules + run state |
 | `help` | Show help |
 
@@ -78,6 +78,12 @@ kfwd <command> [...]
 | `--namespace` | Kubernetes namespace (skippable in TUI form) | `default` |
 | `--context` | Kubernetes context | current context |
 | `--interactive` | Open TUI form instead of positional args | `false` |
+
+### Options for `start` / `stop`
+
+| Flag | Description |
+|------|-------------|
+| `--all`, `-a` | Operate on every configured forward without TUI |
 
 ---
 
@@ -99,11 +105,17 @@ kfwd add prod-db 5432:5432 --context=production
 # Start selected forwards via TUI
 kfwd start
 
+# Start all stopped forwards (no TUI)
+kfwd start --all
+
 # Check what's running
 kfwd status
 
 # Stop selected forwards via TUI
 kfwd stop
+
+# Stop all running forwards (no TUI)
+kfwd stop --all
 
 # Remove a rule
 kfwd remove my-app

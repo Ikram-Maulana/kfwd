@@ -13,7 +13,10 @@ export interface StopDeps {
   stdout?: (s: string) => void;
 }
 
-export async function stop(deps: Partial<StopDeps> = {}): Promise<void> {
+export async function stop(
+  deps: Partial<StopDeps> = {},
+  opts: { all?: boolean } = {}
+): Promise<void> {
   const { pathsFromEnv } = await import("../paths.js");
   const p = pathsFromEnv();
   const cfg = deps.cfg ?? new ConfigStore(p.configFile);
@@ -25,6 +28,21 @@ export async function stop(deps: Partial<StopDeps> = {}): Promise<void> {
   const running = config.forwards.filter((f) => runs.isAlive(f.name));
   if (running.length === 0) {
     out("kfwd: nothing running");
+    return;
+  }
+
+  if (opts.all) {
+    await Promise.all(
+      running.map(async (f) => {
+        const r = runs.read(f.name);
+        if (!r) {
+          return;
+        }
+        await killFn(r.pid);
+        out(`kfwd: killed "${f.name}" pid=${r.pid}`);
+      })
+    );
+    out(`kfwd: stopped ${running.length} forwards`);
     return;
   }
 

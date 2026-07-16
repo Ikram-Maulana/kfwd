@@ -16,7 +16,10 @@ export interface StartDeps {
   stdout?: (s: string) => void;
 }
 
-export async function start(deps: Partial<StartDeps> = {}): Promise<void> {
+export async function start(
+  deps: Partial<StartDeps> = {},
+  opts: { all?: boolean } = {}
+): Promise<void> {
   const { pathsFromEnv } = await import("../paths.js");
   const p = pathsFromEnv();
   const cfg = deps.cfg ?? new ConfigStore(p.configFile);
@@ -28,6 +31,26 @@ export async function start(deps: Partial<StartDeps> = {}): Promise<void> {
   const items = config.forwards;
   if (items.length === 0) {
     out("kfwd: no forwards configured. Run `kfwd add <name> <l:r>` first.");
+    return;
+  }
+
+  if (opts.all) {
+    const fresh = items.filter((f) => !runs.isAlive(f.name));
+    if (fresh.length === 0) {
+      out("kfwd: nothing to start (all forwards already running)");
+      return;
+    }
+    for (const f of fresh) {
+      const argv = buildArgv(f, config);
+      const { pid, cmdline } = spawnFn(argv, runs.logPath(f.name));
+      if (pid > 0) {
+        runs.recordSpawn(f.name, { pid, startedAt: Date.now(), cmdline });
+        out(`kfwd: spawned "${f.name}" pid=${pid}`);
+      } else {
+        out(`kfwd: failed to spawn "${f.name}"`);
+      }
+    }
+    out(`kfwd: started ${fresh.length} forwards`);
     return;
   }
 

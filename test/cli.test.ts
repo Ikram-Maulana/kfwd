@@ -11,14 +11,14 @@ function mockHandlers(): Handlers & { calls: string[] } {
     remove: (name) => {
       calls.push(`remove:${name}`);
     },
-    start: () => {
-      calls.push("start");
+    start: (opts?: { all?: boolean }) => {
+      calls.push(`start:${opts?.all ? "all" : ""}`);
     },
     status: () => {
       calls.push("status");
     },
-    stop: () => {
-      calls.push("stop");
+    stop: (opts?: { all?: boolean }) => {
+      calls.push(`stop:${opts?.all ? "all" : ""}`);
     },
   };
 }
@@ -32,13 +32,37 @@ test("dispatch routes 'status' to status handler", async (t) => {
 test("dispatch routes 'start' to start handler", async (t) => {
   const h = mockHandlers();
   await dispatch(["start"], h);
-  t.deepEqual(h.calls, ["start"]);
+  t.deepEqual(h.calls, ["start:"]);
 });
 
 test("dispatch routes 'stop' to stop handler", async (t) => {
   const h = mockHandlers();
   await dispatch(["stop"], h);
-  t.deepEqual(h.calls, ["stop"]);
+  t.deepEqual(h.calls, ["stop:"]);
+});
+
+test("dispatch routes 'start --all' to start handler with all=true", async (t) => {
+  const h = mockHandlers();
+  await dispatch(["start", "--all"], h);
+  t.deepEqual(h.calls, ["start:all"]);
+});
+
+test("dispatch routes 'start -a' to start handler with all=true", async (t) => {
+  const h = mockHandlers();
+  await dispatch(["start", "-a"], h);
+  t.deepEqual(h.calls, ["start:all"]);
+});
+
+test("dispatch routes 'stop --all' to stop handler with all=true", async (t) => {
+  const h = mockHandlers();
+  await dispatch(["stop", "--all"], h);
+  t.deepEqual(h.calls, ["stop:all"]);
+});
+
+test("dispatch routes 'stop -a' to stop handler with all=true", async (t) => {
+  const h = mockHandlers();
+  await dispatch(["stop", "-a"], h);
+  t.deepEqual(h.calls, ["stop:all"]);
 });
 
 test("dispatch routes 'remove' with name arg", async (t) => {
