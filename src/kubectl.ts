@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { openSync } from "node:fs";
+import { closeSync, openSync } from "node:fs";
 import type { Config, Forward } from "@/types";
 
 export function buildArgv(f: Forward, c: Config): string[] {
@@ -29,6 +29,7 @@ export function spawnDetached(argv: string[], logPath: string): SpawnResult {
     windowsHide: true,
   });
   child.unref();
+  closeSync(logFd);
   const pid = child.pid ?? -1;
   return { pid, cmdline: argv };
 }
@@ -118,6 +119,7 @@ export function spawnSupervised(argv: string[], logPath: string): SpawnResult {
     }
   );
   child.unref();
+  closeSync(logFd);
   const pid = child.pid ?? -1;
   return { pid, cmdline: argv };
 }
