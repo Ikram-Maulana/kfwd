@@ -55,9 +55,12 @@ function log(msg) {
 function cleanup() {
   stopping = true;
   if (active && !active.killed) {
+    active.on("exit", () => process.exit(0));
     try { active.kill("SIGTERM"); } catch {}
+    setTimeout(() => process.exit(0), 5000);
+  } else {
+    process.exit(0);
   }
-  process.exit(0);
 }
 
 process.on("SIGTERM", cleanup);
