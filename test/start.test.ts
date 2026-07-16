@@ -24,6 +24,7 @@ test("start --all starts all stopped forwards", async (t) => {
     { name: "c", localPort: 8003, remotePort: 80, type: "pod" },
   ];
   const { dir, cfg, runs } = fixture(fwd);
+  t.teardown(() => rmSync(dir, { recursive: true }));
   // Record "a" as already running with a real alive PID
   runs.recordSpawn("a", {
     pid: process.pid,
@@ -57,7 +58,6 @@ test("start --all starts all stopped forwards", async (t) => {
     stdout.some((s) => s.includes("started 2")),
     "summary line"
   );
-  rmSync(dir, { recursive: true });
 });
 
 test("start --all when all already running prints nothing to start", async (t) => {
@@ -65,6 +65,7 @@ test("start --all when all already running prints nothing to start", async (t) =
     { name: "x", localPort: 9001, remotePort: 80, type: "pod" },
   ];
   const { dir, cfg, runs } = fixture(fwd);
+  t.teardown(() => rmSync(dir, { recursive: true }));
   runs.recordSpawn("x", {
     pid: process.pid,
     startedAt: Date.now(),
@@ -89,11 +90,11 @@ test("start --all when all already running prints nothing to start", async (t) =
     stdout.some((s) => s.includes("nothing to start")),
     "should print nothing to start"
   );
-  rmSync(dir, { recursive: true });
 });
 
 test("start --all with zero forwards prints no forwards configured", async (t) => {
   const { dir, cfg, runs } = fixture([]);
+  t.teardown(() => rmSync(dir, { recursive: true }));
   const spawned: string[] = [];
   const stdout: string[] = [];
   await start(
@@ -110,5 +111,4 @@ test("start --all with zero forwards prints no forwards configured", async (t) =
   );
   t.is(spawned.length, 0);
   t.true(stdout.some((s) => s.includes("no forwards configured")));
-  rmSync(dir, { recursive: true });
 });
